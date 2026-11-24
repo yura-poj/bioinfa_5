@@ -1,6 +1,6 @@
 {
   "info": {
-    "uuid": "397a8358-3875-4114-b61b-e856fba346cd",
+    "uuid": "f31b9788-87bf-4a12-bb21-4b8c0a65598b",
     "status": "COMPLETE"
   },
   "meta": {
@@ -11,19 +11,19 @@
     {
       "structures": [
         {
-          "url": "https://user-upload.rcsb.org/v1/download/f0d2ce81-bbda-43d4-a866-95858962b4d9/rf2.bcif",
+          "url": "https://user-upload.rcsb.org/v1/download/be8d52ad-6ae8-4865-8298-e29fb0ddfb22/rosettafold2.bcif",
           "format": "mmcif",
           "is_binary": true,
-          "name": "rf2.pdb",
+          "name": "rosettafold2.pdb",
           "selection": {
             "asym_id": "A"
           }
         },
         {
-          "url": "https://user-upload.rcsb.org/v1/download/4a747c4b-e595-4b28-aefe-1e5957494183/af2.bcif",
+          "url": "https://user-upload.rcsb.org/v1/download/85a981f6-1593-4a72-a3eb-73274b1e177c/alphafold2_rank1.bcif",
           "format": "mmcif",
           "is_binary": true,
-          "name": "af2.pdb",
+          "name": "alphafold2_rank1.pdb",
           "selection": {
             "asym_id": "A"
           }
@@ -81,51 +81,51 @@
           ],
           "transformations": [
             [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
             [
               -0.4033933289108016,
               -0.857795696808479,
               -0.31852843629277205,
-              0.0,
+              0,
               -0.484228134271582,
               -0.09524777200009593,
               0.8697419018932462,
-              0.0,
+              0,
               -0.7763999846536096,
               0.5050885115164216,
               -0.3769464940333058,
-              0.0,
+              0,
               7.041575689758231,
               -8.690160346867051,
               0.09429248973246818,
-              1.0
+              1
             ]
           ],
           "summary": {
             "scores": [
               {
-                "value": 12.76,
-                "type": "RMSD"
-              },
-              {
                 "value": 97.68,
                 "type": "similarity-score"
+              },
+              {
+                "value": 12.76,
+                "type": "RMSD"
               }
             ],
             "n_aln_residue_pairs": 60
@@ -187,20 +187,20 @@
             "type": "similarity-score"
           },
           {
-            "value": 0.29,
-            "type": "sequence-identity"
-          },
-          {
-            "value": 5.42,
-            "type": "RMSD"
-          },
-          {
             "value": 0.37,
             "type": "sequence-similarity"
           },
           {
+            "value": 0.29,
+            "type": "sequence-identity"
+          },
+          {
             "value": 0.27,
             "type": "TM-score"
+          },
+          {
+            "value": 5.42,
+            "type": "RMSD"
           }
         ],
         "n_aln_residue_pairs": 60,
