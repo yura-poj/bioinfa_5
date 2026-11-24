@@ -1,0 +1,574 @@
+CELL 1
+#@title Проверка сохранённых файлов и GPU
+from pathlib import Path
+import os, sys, subprocess
+print(sys.version)
+print('Files:',[p.name for p in Path('/content').iterdir()])
+print('LD_LIBRARY_PATH:',os.environ.get('LD_LIBRARY_PATH'))
+print('Driver directories:',[(str(p),p.exists()) for p in [Path('/usr/local/nvidia/lib'),Path('/usr/local/nvidia/lib64')]])
+p=subprocess.run(['nvidia-smi'],capture_output=True,text=True)
+print(p.stdout,p.stderr)
+
+
+3.12.12 (main, Oct 10 2025, 08:52:57) [GCC 11.4.0]
+Files: ['.config', 'sample_data']
+LD_LIBRARY_PATH: /usr/lib64-nvidia
+Driver directories: [('/usr/local/nvidia/lib', False), ('/usr/local/nvidia/lib64', False)]
+Wed Nov 18 08:30:09 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
+| N/A   44C    P8              9W /   70W |       0MiB /  15360MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+ 
+
+CELL 2
+#@title AlphaFold2 isolated environment with NVIDIA driver path
+import os, sys, subprocess
+def run_live(command, **kwargs):
+    print(command,flush=True)
+    p=subprocess.Popen(command,shell=True,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,**kwargs)
+    for line in p.stdout: print(line,end='',flush=True)
+    if p.wait(): raise RuntimeError('Command failed')
+run_live(f'{sys.executable} -m pip install -q virtualenv')
+run_live(f'{sys.executable} -m virtualenv /content/af2-env')
+af_env=os.environ.copy()
+af_env.pop('PYTHONPATH',None)
+assert os.path.isdir('/usr/lib64-nvidia')
+af_env['LD_LIBRARY_PATH']='/usr/lib64-nvidia'
+run_live("/content/af2-env/bin/python -m pip install 'colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold' 'jax[cuda12]>=0.6.2,<0.12'",env=af_env)
+
+
+/usr/bin/python3 -m pip install -q virtualenv
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.7/5.7 MB 68.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 472.1/472.1 kB 22.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 222.4/222.4 kB 17.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 9.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 98.5/98.5 kB 9.7 MB/s eta 0:00:00
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+langchain-core 1.2.7 requires packaging<26.0.0,>=23.2.0, but you have packaging 26.3 which is incompatible.
+/usr/bin/python3 -m virtualenv /content/af2-env
+created virtual environment CPython3.12.12.final.0-64-x86_64 in 635ms
+  creator CPython3Posix(dest=/content/af2-env, clear=False, no_vcs_ignore=False, venv_redirect=None, global=False)
+  seeder FromAppData(download=False, pip=bundle, via=copy, app_data_dir=/root/.cache/virtualenv)
+    added seed packages: pip==26.3
+  activators BashActivator,CShellActivator,FishActivator,NushellActivator,PowerShellActivator,PythonActivator,XonshActivator
+/content/af2-env/bin/python -m pip install 'colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold' 'jax[cuda12]>=0.6.2,<0.12'
+Collecting colabfold @ git+https://github.com/sokrypton/ColabFold (from colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Cloning https://github.com/sokrypton/ColabFold to /tmp/pip-install-oov2h3g5/colabfold_4a7bcc225f7e4d6aa561ce448e204e88
+  Running command git clone --filter=blob:none --quiet https://github.com/sokrypton/ColabFold /tmp/pip-install-oov2h3g5/colabfold_4a7bcc225f7e4d6aa561ce448e204e88
+  Resolved https://github.com/sokrypton/ColabFold to commit eb061aa6706959fdffe15e86d27ca08083d6ed8d
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting jax<0.12,>=0.6.2 (from jax[cuda12]<0.12,>=0.6.2)
+  Downloading jax-0.11.2-py3-none-any.whl.metadata (13 kB)
+Collecting appdirs<2.0.0,>=1.4.4 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading appdirs-1.4.4-py2.py3-none-any.whl.metadata (9.0 kB)
+Collecting biopython<1.86 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading biopython-1.85-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (13 kB)
+Collecting importlib-metadata<9.0.0,>=8.6.1 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading importlib_metadata-8.9.0-py3-none-any.whl.metadata (4.5 kB)
+Collecting matplotlib<4.0.0,>=3.8.4 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading matplotlib-3.11.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (80 kB)
+Collecting numpy<3.0.0,>=2.0.2 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting orjson<4.0.0,>=3.11.4 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading orjson-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (42 kB)
+Collecting pandas<3.0.0,>=2.2.2 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+Collecting requests<3.0.0,>=2.26.0 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+Collecting tqdm<5.0.0,>=4.62.2 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading tqdm-4.70.1-py3-none-any.whl.metadata (57 kB)
+Collecting absl-py<2.0.0,>=1.0.0 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading absl_py-1.4.0-py3-none-any.whl.metadata (2.3 kB)
+Collecting alphafold-colabfold==2.3.23 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading alphafold_colabfold-2.3.23-py3-none-any.whl.metadata (1.3 kB)
+Collecting colabfold-binaries<0.2.0,>=0.1.0 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading colabfold_binaries-0.1.0-py3-none-manylinux2014_x86_64.whl.metadata (1.2 kB)
+Collecting colabfold-kernels<0.5.0,>=0.4.0 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading colabfold_kernels-0.4.0-py3-none-any.whl.metadata (1.3 kB)
+Collecting dm-haiku<0.0.18,>=0.0.17 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading dm_haiku-0.0.17-py3-none-any.whl.metadata (19 kB)
+Collecting dm-tree<0.2.0,>=0.1.9 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading dm_tree-0.1.10-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (2.6 kB)
+Collecting py3Dmol<3.0.0,>=2.0.1 (from colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading py3dmol-2.5.5-py2.py3-none-any.whl.metadata (2.1 kB)
+Collecting chex (from alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading chex-0.1.92-py3-none-any.whl.metadata (19 kB)
+Collecting immutabledict (from alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading immutabledict-4.3.1-py3-none-any.whl.metadata (3.5 kB)
+Collecting ml-collections (from alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading ml_collections-1.1.0-py3-none-any.whl.metadata (22 kB)
+Collecting scipy (from alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+Collecting jaxlib<=0.11.2,>=0.11.2 (from jax<0.12,>=0.6.2->jax[cuda12]<0.12,>=0.6.2)
+  Downloading jaxlib-0.11.2-cp312-cp312-manylinux_2_27_x86_64.whl.metadata (1.3 kB)
+Collecting ml_dtypes>=0.5.0 (from jax<0.12,>=0.6.2->jax[cuda12]<0.12,>=0.6.2)
+  Downloading ml_dtypes-0.7.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (11 kB)
+Collecting opt_einsum (from jax<0.12,>=0.6.2->jax[cuda12]<0.12,>=0.6.2)
+  Downloading opt_einsum-3.4.0-py3-none-any.whl.metadata (6.3 kB)
+Collecting colabfold-legacy-kernels<0.5,>=0.4.0 (from colabfold-kernels<0.5.0,>=0.4.0->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading colabfold_legacy_kernels-0.4.0-py3-none-manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+Collecting jmp>=0.0.2 (from dm-haiku<0.0.18,>=0.0.17->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading jmp-0.0.4-py3-none-any.whl.metadata (8.9 kB)
+Collecting tabulate>=0.8.9 (from dm-haiku<0.0.18,>=0.0.17->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading tabulate-0.10.0-py3-none-any.whl.metadata (40 kB)
+Collecting attrs>=18.2.0 (from dm-tree<0.2.0,>=0.1.9->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+Collecting wrapt>=1.11.2 (from dm-tree<0.2.0,>=0.1.9->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading wrapt-2.5.2-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (7.6 kB)
+Collecting zipp>=3.20 (from importlib-metadata<9.0.0,>=8.6.1->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading zipp-4.1.2-py3-none-any.whl.metadata (3.6 kB)
+Collecting jax-cuda12-plugin<=0.11.2,>=0.11.2 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading jax_cuda12_plugin-0.11.2-cp312-cp312-manylinux_2_27_x86_64.whl.metadata (2.0 kB)
+Collecting jax-cuda12-pjrt==0.11.2 (from jax-cuda12-plugin<=0.11.2,>=0.11.2->jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading jax_cuda12_pjrt-0.11.2-py3-none-manylinux_2_27_x86_64.whl.metadata (580 bytes)
+Collecting nvidia-cublas-cu12>=12.1.3.1 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cublas_cu12-12.9.3.13-py3-none-manylinux_2_27_x86_64.whl.metadata (1.8 kB)
+Collecting nvidia-cuda-cupti-cu12>=12.1.105 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cuda_cupti_cu12-12.9.79-py3-none-manylinux_2_25_x86_64.whl.metadata (1.8 kB)
+Collecting nvidia-cuda-nvcc-cu12>=12.6.85 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cuda_nvcc_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+Collecting nvidia-cuda-runtime-cu12>=12.1.105 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cuda_runtime_cu12-12.9.79-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+Collecting nvidia-cudnn-cu12<10.0,>=9.10.2.21 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cudnn_cu12-9.28.1.4-py3-none-manylinux_2_27_x86_64.whl.metadata (1.9 kB)
+Collecting nvidia-cufft-cu12>=11.0.2.54 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cufft_cu12-11.4.1.4-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+Collecting nvidia-cusolver-cu12>=11.4.5.107 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_x86_64.whl.metadata (1.9 kB)
+Collecting nvidia-cusparse-cu12>=12.1.0.106 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+Collecting nvidia-nccl-cu12>=2.18.1 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_nccl_cu12-2.32.6-py3-none-manylinux_2_27_x86_64.whl.metadata (2.1 kB)
+Collecting nvidia-nvjitlink-cu12>=12.1.105 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+Collecting nvidia-cuda-nvrtc-cu12>=12.1.55 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cuda_nvrtc_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+Collecting nvidia-nvshmem-cu12>=3.2.5 (from jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_nvshmem_cu12-3.8.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.2 kB)
+Collecting contourpy>=1.0.1 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading contourpy-1.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+Collecting cycler>=0.10 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+Collecting fonttools>=4.28.2 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading fonttools-4.68.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (139 kB)
+Collecting kiwisolver>=1.3.1 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.2 kB)
+Collecting packaging>=20.0 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+Collecting pillow>=9 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading pillow-13.0.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+Collecting pyparsing>=3 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+Collecting python-dateutil>=2.7 (from matplotlib<4.0.0,>=3.8.4->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading python_dateutil-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+Collecting pytz>=2020.1 (from pandas<3.0.0,>=2.2.2->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading pytz-2026.6-py2.py3-none-any.whl.metadata (22 kB)
+Collecting tzdata>=2022.7 (from pandas<3.0.0,>=2.2.2->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading tzdata-2026.6-py2.py3-none-any.whl.metadata (1.4 kB)
+Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.26.0->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+Collecting idna<4,>=2.5 (from requests<3.0.0,>=2.26.0->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+Collecting urllib3<3,>=1.26 (from requests<3.0.0,>=2.26.0->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting certifi>=2023.5.7 (from requests<3.0.0,>=2.26.0->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+Collecting nvidia-cuda-cccl-cu12 (from nvidia-nvshmem-cu12>=3.2.5->jax-cuda12-plugin[with-cuda]<=0.11.2,>=0.11.2; extra == "cuda12"->jax[cuda12]<0.12,>=0.6.2)
+  Downloading nvidia_cuda_cccl_cu12-12.9.27-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+Collecting chex (from alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading chex-0.1.91-py3-none-any.whl.metadata (18 kB)
+INFO: pip is looking at multiple versions of chex to determine which version is compatible with other requirements. This could take a while.
+  Downloading chex-0.1.90-py3-none-any.whl.metadata (18 kB)
+Collecting typing_extensions>=4.2.0 (from chex->alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting setuptools (from chex->alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading setuptools-84.2.1-py3-none-any.whl.metadata (6.6 kB)
+Collecting toolz>=0.9.0 (from chex->alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading toolz-1.2.0-py3-none-any.whl.metadata (5.2 kB)
+Collecting PyYAML (from ml-collections->alphafold-colabfold==2.3.23->colabfold @ git+https://github.com/sokrypton/ColabFold->colabfold[alphafold] @ git+https://github.com/sokrypton/ColabFold)
+  Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Downloading alphafold_colabfold-2.3.23-py3-none-any.whl (261 kB)
+Downloading jax-0.11.2-py3-none-any.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 99.2 MB/s  0:00:00
+Downloading absl_py-1.4.0-py3-none-any.whl (126 kB)
+Downloading appdirs-1.4.4-py2.py3-none-any.whl (9.6 kB)
+Downloading biopython-1.85-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 120.5 MB/s  0:00:00
+Downloading colabfold_binaries-0.1.0-py3-none-manylinux2014_x86_64.whl (3.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.5/3.5 MB 104.0 MB/s  0:00:00
+Downloading colabfold_kernels-0.4.0-py3-none-any.whl (18 kB)
+Downloading colabfold_legacy_kernels-0.4.0-py3-none-manylinux_2_28_x86_64.whl (8.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.1/8.1 MB 118.9 MB/s  0:00:00
+Downloading dm_haiku-0.0.17-py3-none-any.whl (377 kB)
+Downloading dm_tree-0.1.10-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (186 kB)
+Downloading importlib_metadata-8.9.0-py3-none-any.whl (27 kB)
+Downloading jax_cuda12_plugin-0.11.2-cp312-cp312-manylinux_2_27_x86_64.whl (8.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.6/8.6 MB 29.5 MB/s  0:00:00
+Downloading jax_cuda12_pjrt-0.11.2-py3-none-manylinux_2_27_x86_64.whl (188.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.2/188.2 MB 23.1 MB/s  0:00:08
+Downloading jaxlib-0.11.2-cp312-cp312-manylinux_2_27_x86_64.whl (89.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 89.9/89.9 MB 42.7 MB/s  0:00:02
+Downloading matplotlib-3.11.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 46.4 MB/s  0:00:00
+Downloading numpy-2.5.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (15.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.7/15.7 MB 50.5 MB/s  0:00:00
+Downloading nvidia_cudnn_cu12-9.28.1.4-py3-none-manylinux_2_27_x86_64.whl (716.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 716.6/716.6 MB 41.0 MB/s  0:00:15
+Downloading orjson-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (130 kB)
+Downloading pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.4/12.4 MB 63.1 MB/s  0:00:00
+Downloading py3dmol-2.5.5-py2.py3-none-any.whl (7.2 kB)
+Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (257 kB)
+Downloading idna-3.20-py3-none-any.whl (69 kB)
+Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+Downloading contourpy-1.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (383 kB)
+Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+Downloading fonttools-4.68.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 71.8 MB/s  0:00:00
+Downloading jmp-0.0.4-py3-none-any.whl (18 kB)
+Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 48.9 MB/s  0:00:00
+Downloading ml_dtypes-0.7.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (463 kB)
+Downloading nvidia_cublas_cu12-12.9.3.13-py3-none-manylinux_2_27_x86_64.whl (581.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 581.2/581.2 MB 21.1 MB/s  0:00:14
+Downloading nvidia_cuda_cupti_cu12-12.9.79-py3-none-manylinux_2_25_x86_64.whl (10.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.8/10.8 MB 41.2 MB/s  0:00:00
+Downloading nvidia_cuda_nvcc_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (40.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.5/40.5 MB 32.8 MB/s  0:00:01
+Downloading nvidia_cuda_nvrtc_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (89.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 89.6/89.6 MB 32.8 MB/s  0:00:02
+Downloading nvidia_cuda_runtime_cu12-12.9.79-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.5/3.5 MB 43.0 MB/s  0:00:00
+Downloading nvidia_cufft_cu12-11.4.1.4-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (200.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200.9/200.9 MB 26.1 MB/s  0:00:07
+Downloading nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_x86_64.whl (338.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 338.1/338.1 MB 17.3 MB/s  0:00:16
+Downloading nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (366.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 366.5/366.5 MB 23.9 MB/s  0:00:12
+Downloading nvidia_nccl_cu12-2.32.6-py3-none-manylinux_2_27_x86_64.whl (336.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 336.5/336.5 MB 65.6 MB/s  0:00:04
+Downloading nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (39.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 39.7/39.7 MB 63.6 MB/s  0:00:00
+Downloading nvidia_nvshmem_cu12-3.8.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (280.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 280.8/280.8 MB 27.2 MB/s  0:00:09
+Using cached packaging-26.3-py3-none-any.whl (129 kB)
+Downloading pillow-13.0.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 67.1 MB/s  0:00:00
+Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+Downloading python_dateutil-4.0.0-py3-none-any.whl (92 kB)
+Downloading pytz-2026.6-py2.py3-none-any.whl (506 kB)
+Downloading scipy-1.18.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.3/35.3 MB 47.3 MB/s  0:00:00
+Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+Downloading wrapt-2.5.2-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (250 kB)
+Downloading zipp-4.1.2-py3-none-any.whl (10 kB)
+Downloading chex-0.1.90-py3-none-any.whl (101 kB)
+Downloading toolz-1.2.0-py3-none-any.whl (60 kB)
+Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Downloading immutabledict-4.3.1-py3-none-any.whl (5.0 kB)
+Downloading ml_collections-1.1.0-py3-none-any.whl (76 kB)
+Downloading nvidia_cuda_cccl_cu12-12.9.27-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 64.3 MB/s  0:00:00
+Downloading opt_einsum-3.4.0-py3-none-any.whl (71 kB)
+Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 29.6 MB/s  0:00:00
+Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 kB 30.0 MB/s  0:00:00
+Building wheels for collected packages: colabfold
+  Building wheel for colabfold (pyproject.toml): started
+  Building wheel for colabfold (pyproject.toml): finished with status 'done'
+  Created wheel for colabfold: filename=colabfold-1.6.3-py3-none-any.whl size=94539 sha256=829c52fae1395886567c9a04f68c5d63686131b6e2b7a5879a85f94259a7dd43
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nnvxql23/wheels/4c/bf/ed/6d891768ab18db868a12995872155b19fadfc3cfeb6a40cbff
+Successfully built colabfold
+Installing collected packages: pytz, py3Dmol, jax-cuda12-pjrt, appdirs, zipp, wrapt, urllib3, tzdata, typing_extensions, tqdm, toolz, tabulate, setuptools, PyYAML, pyparsing, pillow, packaging, orjson, opt_einsum, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-nvcc-cu12, nvidia-cuda-cupti-cu12, nvidia-cuda-cccl-cu12, numpy, kiwisolver, jax-cuda12-plugin, immutabledict, idna, fonttools, cycler, colabfold-legacy-kernels, colabfold-binaries, charset_normalizer, certifi, attrs, absl-py, scipy, requests, python-dateutil, nvidia-nvshmem-cu12, nvidia-cusparse-cu12, nvidia-cufft-cu12, nvidia-cublas-cu12, ml_dtypes, ml-collections, jmp, importlib-metadata, dm-tree, contourpy, colabfold-kernels, biopython, pandas, nvidia-cusolver-cu12, nvidia-cudnn-cu12, matplotlib, jaxlib, dm-haiku, jax, colabfold, chex, alphafold-colabfold
+
+Successfully installed PyYAML-6.0.3 absl-py-1.4.0 alphafold-colabfold-2.3.23 appdirs-1.4.4 attrs-26.1.0 biopython-1.85 certifi-2026.10.23 charset_normalizer-3.5.2 chex-0.1.90 colabfold-1.6.3 colabfold-binaries-0.1.0 colabfold-kernels-0.4.0 colabfold-legacy-kernels-0.4.0 contourpy-1.4.0 cycler-0.12.1 dm-haiku-0.0.17 dm-tree-0.1.10 fonttools-4.68.0 idna-3.20 immutabledict-4.3.1 importlib-metadata-8.9.0 jax-0.11.2 jax-cuda12-pjrt-0.11.2 jax-cuda12-plugin-0.11.2 jaxlib-0.11.2 jmp-0.0.4 kiwisolver-1.5.1 matplotlib-3.11.2 ml-collections-1.1.0 ml_dtypes-0.7.0 numpy-2.5.5 nvidia-cublas-cu12-12.9.3.13 nvidia-cuda-cccl-cu12-12.9.27 nvidia-cuda-cupti-cu12-12.9.79 nvidia-cuda-nvcc-cu12-12.9.86 nvidia-cuda-nvrtc-cu12-12.9.86 nvidia-cuda-runtime-cu12-12.9.79 nvidia-cudnn-cu12-9.28.1.4 nvidia-cufft-cu12-11.4.1.4 nvidia-cusolver-cu12-11.7.5.82 nvidia-cusparse-cu12-12.5.10.65 nvidia-nccl-cu12-2.32.6 nvidia-nvjitlink-cu12-12.9.86 nvidia-nvshmem-cu12-3.8.0 opt_einsum-3.4.0 orjson-3.13.0 packaging-26.3 pandas-2.3.3 pillow-13.0.0 py3Dmol-2.5.5 pyparsing-3.3.3 python-dateutil-4.0.0 pytz-2026.6 requests-2.34.2 scipy-1.18.1 setuptools-84.2.1 tabulate-0.10.0 toolz-1.2.0 tqdm-4.70.1 typing_extensions-4.16.0 tzdata-2026.6 urllib3-2.8.0 wrapt-2.5.2 zipp-4.1.2
+
+CELL 15
+#@title AlphaFold2: GPU test and five predictions for row 29
+from pathlib import Path
+import shlex
+af_dir=Path('/content/af2-run')
+af_dir.mkdir(exist_ok=True)
+(af_dir/'row29.fasta').write_text('>assignment5_row29_af2\nMASVQQGEKQLFEKFWRGTFKAVATPRPESIIVASITARKPLPRTEPQNNPVVPAQDGPSEKLGQHLATEPLGTNSWERDKTCRELGATRGHSASHDKDL\n')
+probe="import jax, jax.numpy as j; print(jax.__version__,jax.devices()); assert any(d.platform=='gpu' for d in jax.devices()); print(j.dot(j.ones((32,32)),j.ones((32,32))).block_until_ready()[0,0]); import colabfold.batch; print('AF2 imports OK')"
+run_live('/content/af2-env/bin/python -c '+shlex.quote(probe),cwd=str(af_dir),env=af_env)
+run_live('/content/af2-env/bin/python -m pip freeze > dependencies.txt',cwd=str(af_dir),env=af_env)
+run_live('/content/af2-env/bin/colabfold_batch /content/af2-run/row29.fasta /content/af2-run/results --model-type alphafold2_ptm --num-models 5 --num-recycle 3 --num-relax 0 --msa-mode mmseqs2_uniref_env',cwd=str(af_dir),env=af_env)
+
+
+/content/af2-env/bin/python -c 'import jax, jax.numpy as j; print(jax.__version__,jax.devices()); assert any(d.platform=='"'"'gpu'"'"' for d in jax.devices()); print(j.dot(j.ones((32,32)),j.ones((32,32))).block_until_ready()[0,0]); import colabfold.batch; print('"'"'AF2 imports OK'"'"')'
+0.11.2 [CudaDevice(id=0)]
+32.0
+AF2 imports OK
+/content/af2-env/bin/python -m pip freeze > dependencies.txt
+/content/af2-env/bin/colabfold_batch /content/af2-run/row29.fasta /content/af2-run/results --model-type alphafold2_ptm --num-models 5 --num-recycle 3 --num-relax 0 --msa-mode mmseqs2_uniref_env
+2026-11-18 08:35:15,227 Running colabfold 1.6.3 (eb061aa6706959fdffe15e86d27ca08083d6ed8d)
+
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   0%|          | 0/3722752000 [00:00<?, ?it/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   0%|          | 17.4M/3.47G [00:00<00:20, 183MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   1%|▏         | 46.0M/3.47G [00:00<00:14, 251MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   2%|▏         | 74.9M/3.47G [00:00<00:13, 275MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   3%|▎         | 101M/3.47G [00:00<00:13, 271MB/s] 
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   4%|▎         | 127M/3.47G [00:00<00:13, 263MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   4%|▍         | 152M/3.47G [00:00<00:13, 258MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   5%|▍         | 177M/3.47G [00:00<00:14, 243MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   6%|▌         | 202M/3.47G [00:00<00:14, 249MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   6%|▋         | 226M/3.47G [00:00<00:14, 248MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   7%|▋         | 250M/3.47G [00:01<00:14, 244MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   8%|▊         | 273M/3.47G [00:01<00:13, 246MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   8%|▊         | 298M/3.47G [00:01<00:13, 248MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:   9%|▉         | 321M/3.47G [00:01<00:13, 248MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  10%|▉         | 345M/3.47G [00:01<00:13, 248MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  10%|█         | 369M/3.47G [00:01<00:13, 248MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  11%|█         | 393M/3.47G [00:01<00:13, 249MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  12%|█▏        | 417M/3.47G [00:01<00:13, 242MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  12%|█▏        | 441M/3.47G [00:01<00:13, 246MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  13%|█▎        | 467M/3.47G [00:01<00:12, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  14%|█▍        | 491M/3.47G [00:02<00:12, 253MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  15%|█▍        | 517M/3.47G [00:02<00:12, 257MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  15%|█▌        | 541M/3.47G [00:02<00:12, 255MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  16%|█▌        | 567M/3.47G [00:02<00:12, 259MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  17%|█▋        | 591M/3.47G [00:02<00:12, 258MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  17%|█▋        | 617M/3.47G [00:02<00:11, 260MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  18%|█▊        | 643M/3.47G [00:02<00:11, 265MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  19%|█▉        | 669M/3.47G [00:02<00:11, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  20%|█▉        | 694M/3.47G [00:02<00:11, 256MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  20%|██        | 719M/3.47G [00:02<00:11, 254MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  21%|██        | 743M/3.47G [00:03<00:11, 254MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  22%|██▏       | 767M/3.47G [00:03<00:11, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  22%|██▏       | 791M/3.47G [00:03<00:12, 240MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  23%|██▎       | 819M/3.47G [00:03<00:11, 253MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  24%|██▎       | 843M/3.47G [00:03<00:11, 250MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  24%|██▍       | 867M/3.47G [00:03<00:11, 251MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  25%|██▌       | 893M/3.47G [00:03<00:10, 258MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  26%|██▌       | 918M/3.47G [00:03<00:10, 253MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  27%|██▋       | 946M/3.47G [00:03<00:10, 263MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  27%|██▋       | 971M/3.47G [00:04<00:10, 255MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  28%|██▊       | 996M/3.47G [00:04<00:10, 258MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  29%|██▉       | 1.00G/3.47G [00:04<00:10, 255MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  29%|██▉       | 1.02G/3.47G [00:04<00:10, 249MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  30%|███       | 1.04G/3.47G [00:04<00:10, 243MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  31%|███       | 1.07G/3.47G [00:04<00:10, 248MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  31%|███▏      | 1.09G/3.47G [00:04<00:10, 245MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  32%|███▏      | 1.12G/3.47G [00:04<00:09, 255MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  33%|███▎      | 1.14G/3.47G [00:04<00:09, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  34%|███▎      | 1.16G/3.47G [00:04<00:10, 231MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  34%|███▍      | 1.19G/3.47G [00:05<00:10, 233MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  35%|███▍      | 1.21G/3.47G [00:05<00:10, 237MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  36%|███▌      | 1.23G/3.47G [00:05<00:10, 225MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  36%|███▌      | 1.25G/3.47G [00:05<00:11, 203MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  37%|███▋      | 1.27G/3.47G [00:05<00:11, 205MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  37%|███▋      | 1.29G/3.47G [00:05<00:11, 206MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  38%|███▊      | 1.31G/3.47G [00:05<00:10, 211MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  39%|███▊      | 1.34G/3.47G [00:05<00:10, 217MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  39%|███▉      | 1.36G/3.47G [00:06<00:11, 189MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  40%|███▉      | 1.37G/3.47G [00:06<00:11, 190MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  40%|████      | 1.39G/3.47G [00:06<00:11, 189MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  41%|████      | 1.41G/3.47G [00:06<00:12, 182MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  41%|████      | 1.43G/3.47G [00:06<00:11, 183MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  42%|████▏     | 1.45G/3.47G [00:06<00:10, 200MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  42%|████▏     | 1.47G/3.47G [00:06<00:10, 213MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  43%|████▎     | 1.49G/3.47G [00:06<00:09, 219MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  44%|████▎     | 1.52G/3.47G [00:06<00:09, 223MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  44%|████▍     | 1.54G/3.47G [00:06<00:09, 222MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  45%|████▌     | 1.56G/3.47G [00:07<00:08, 230MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  46%|████▌     | 1.58G/3.47G [00:07<00:08, 227MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  46%|████▌     | 1.60G/3.47G [00:07<00:09, 217MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  47%|████▋     | 1.62G/3.47G [00:07<00:09, 201MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  47%|████▋     | 1.64G/3.47G [00:07<00:10, 187MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  48%|████▊     | 1.66G/3.47G [00:07<00:10, 189MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  48%|████▊     | 1.68G/3.47G [00:07<00:09, 193MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  49%|████▉     | 1.70G/3.47G [00:08<00:30, 62.1MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  49%|████▉     | 1.71G/3.47G [00:11<02:03, 15.3MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  50%|█████     | 1.73G/3.47G [00:12<01:22, 22.7MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  51%|█████     | 1.76G/3.47G [00:12<00:50, 36.0MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  52%|█████▏    | 1.79G/3.47G [00:12<00:34, 51.6MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  52%|█████▏    | 1.81G/3.47G [00:12<00:28, 63.4MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  53%|█████▎    | 1.83G/3.47G [00:12<00:22, 76.8MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  53%|█████▎    | 1.85G/3.47G [00:12<00:18, 91.4MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  54%|█████▍    | 1.87G/3.47G [00:12<00:15, 112MB/s] 
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  55%|█████▍    | 1.90G/3.47G [00:12<00:12, 139MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  55%|█████▌    | 1.92G/3.47G [00:12<00:10, 154MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  56%|█████▌    | 1.94G/3.47G [00:13<00:09, 174MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  57%|█████▋    | 1.96G/3.47G [00:13<00:08, 192MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  57%|█████▋    | 1.99G/3.47G [00:13<00:07, 208MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  58%|█████▊    | 2.01G/3.47G [00:13<00:07, 213MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  59%|█████▊    | 2.03G/3.47G [00:13<00:06, 223MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  59%|█████▉    | 2.06G/3.47G [00:13<00:06, 236MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  60%|██████    | 2.08G/3.47G [00:13<00:06, 240MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  61%|██████    | 2.11G/3.47G [00:13<00:06, 243MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  61%|██████▏   | 2.13G/3.47G [00:13<00:05, 246MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  62%|██████▏   | 2.15G/3.47G [00:13<00:05, 250MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  63%|██████▎   | 2.18G/3.47G [00:14<00:05, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  63%|██████▎   | 2.20G/3.47G [00:14<00:05, 250MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  64%|██████▍   | 2.23G/3.47G [00:14<00:05, 255MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  65%|██████▍   | 2.25G/3.47G [00:14<00:05, 244MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  66%|██████▌   | 2.27G/3.47G [00:14<00:05, 240MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  66%|██████▋   | 2.30G/3.47G [00:14<00:04, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  67%|██████▋   | 2.32G/3.47G [00:14<00:04, 255MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  68%|██████▊   | 2.35G/3.47G [00:14<00:04, 253MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  68%|██████▊   | 2.37G/3.47G [00:14<00:04, 253MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  69%|██████▉   | 2.39G/3.47G [00:14<00:04, 251MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  70%|██████▉   | 2.42G/3.47G [00:15<00:04, 249MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  70%|███████   | 2.44G/3.47G [00:15<00:04, 243MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  71%|███████   | 2.46G/3.47G [00:15<00:04, 246MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  72%|███████▏  | 2.49G/3.47G [00:15<00:05, 199MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  73%|███████▎  | 2.52G/3.47G [00:15<00:04, 226MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  73%|███████▎  | 2.55G/3.47G [00:15<00:03, 249MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  74%|███████▍  | 2.57G/3.47G [00:15<00:04, 237MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  75%|███████▍  | 2.59G/3.47G [00:15<00:03, 240MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  76%|███████▌  | 2.62G/3.47G [00:15<00:03, 257MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  76%|███████▋  | 2.64G/3.47G [00:16<00:03, 244MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  77%|███████▋  | 2.67G/3.47G [00:16<00:03, 252MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  78%|███████▊  | 2.70G/3.47G [00:16<00:03, 260MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  78%|███████▊  | 2.72G/3.47G [00:16<00:03, 236MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  79%|███████▉  | 2.74G/3.47G [00:16<00:03, 241MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  80%|███████▉  | 2.77G/3.47G [00:16<00:02, 258MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  81%|████████  | 2.80G/3.47G [00:16<00:02, 247MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  81%|████████▏ | 2.82G/3.47G [00:16<00:02, 232MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  82%|████████▏ | 2.84G/3.47G [00:16<00:02, 234MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  83%|████████▎ | 2.87G/3.47G [00:17<00:02, 236MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  83%|████████▎ | 2.89G/3.47G [00:17<00:02, 236MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  84%|████████▍ | 2.91G/3.47G [00:17<00:02, 244MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  85%|████████▍ | 2.94G/3.47G [00:17<00:02, 240MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  85%|████████▌ | 2.96G/3.47G [00:17<00:02, 237MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  86%|████████▌ | 2.98G/3.47G [00:17<00:02, 237MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  87%|████████▋ | 3.00G/3.47G [00:17<00:02, 242MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  87%|████████▋ | 3.03G/3.47G [00:17<00:01, 247MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  88%|████████▊ | 3.05G/3.47G [00:17<00:01, 246MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  89%|████████▊ | 3.07G/3.47G [00:17<00:01, 245MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  89%|████████▉ | 3.10G/3.47G [00:18<00:01, 240MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  90%|████████▉ | 3.12G/3.47G [00:18<00:01, 235MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  91%|█████████ | 3.14G/3.47G [00:18<00:01, 223MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  91%|█████████▏| 3.16G/3.47G [00:18<00:01, 231MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  92%|█████████▏| 3.19G/3.47G [00:18<00:01, 230MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  93%|█████████▎| 3.21G/3.47G [00:18<00:01, 222MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  93%|█████████▎| 3.23G/3.47G [00:18<00:01, 232MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  94%|█████████▍| 3.25G/3.47G [00:18<00:00, 235MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  95%|█████████▍| 3.28G/3.47G [00:18<00:00, 244MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  95%|█████████▌| 3.30G/3.47G [00:19<00:00, 246MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  96%|█████████▌| 3.32G/3.47G [00:19<00:00, 215MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  97%|█████████▋| 3.35G/3.47G [00:19<00:00, 229MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  97%|█████████▋| 3.37G/3.47G [00:19<00:00, 224MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  98%|█████████▊| 3.39G/3.47G [00:19<00:00, 217MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  98%|█████████▊| 3.41G/3.47G [00:19<00:00, 204MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold:  99%|█████████▉| 3.43G/3.47G [00:19<00:00, 182MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold: 100%|█████████▉| 3.45G/3.47G [00:19<00:00, 187MB/s]
+Downloading alphafold2_ptm weights to /root/.cache/colabfold: 100%|██████████| 3.47G/3.47G [00:19<00:00, 186MB/s]
+
+WARNING: You are welcome to use the default MSA server, however keep in mind that it's a
+limited shared resource only capable of processing a few thousand MSAs per day. Please
+submit jobs only from a single IP address. We reserve the right to limit access to the
+server case-by-case when usage exceeds fair use. If you require more MSAs: You can 
+precompute all MSAs with `colabfold_search` or host your own API and pass it to `--host-url`
+
+2026-11-18 08:35:38,890 Running on GPU
+2026-11-18 08:35:39,130 Found 5 citations for tools or databases
+2026-11-18 08:35:39,130 Query 1/1: assignment5_row29_af2 (length 100)
+2026-11-18 08:35:39,394 Could not get MSA/templates for assignment5_row29_af2: Key backend: 'module://matplotlib_inline.backend_inline' is not a valid value for backend; supported values are ['gtk3agg', 'gtk3cairo', 'gtk4agg', 'gtk4cairo', 'macosx', 'nbagg', 'notebook', 'qtagg', 'qtcairo', 'qt5agg', 'qt5cairo', 'tkagg', 'tkcairo', 'webagg', 'wx', 'wxagg', 'wxcairo', 'agg', 'cairo', 'pdf', 'pgf', 'ps', 'svg', 'template']
+Traceback (most recent call last):
+  File "/content/af2-env/lib/python3.12/site-packages/colabfold/batch.py", line 1490, in run
+    = get_msa_and_templates(
+      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/content/af2-env/lib/python3.12/site-packages/colabfold/batch.py", line 700, in get_msa_and_templates
+    from colabfold.colabfold import run_mmseqs2
+  File "/content/af2-env/lib/python3.12/site-packages/colabfold/colabfold.py", line 23, in <module>
+    import matplotlib.pyplot as plt
+  File "/content/af2-env/lib/python3.12/site-packages/matplotlib/__init__.py", line 1292, in <module>
+    rcParams['backend'] = os.environ.get('MPLBACKEND')
+    ~~~~~~~~^^^^^^^^^^^
+  File "/content/af2-env/lib/python3.12/site-packages/matplotlib/__init__.py", line 784, in __setitem__
+    raise ValueError(f"Key {key}: {ve}") from None
+ValueError: Key backend: 'module://matplotlib_inline.backend_inline' is not a valid value for backend; supported values are ['gtk3agg', 'gtk3cairo', 'gtk4agg', 'gtk4cairo', 'macosx', 'nbagg', 'notebook', 'qtagg', 'qtcairo', 'qt5agg', 'qt5cairo', 'tkagg', 'tkcairo', 'webagg', 'wx', 'wxagg', 'wxcairo', 'agg', 'cairo', 'pdf', 'pgf', 'ps', 'svg', 'template']
+2026-11-18 08:35:39,401 Done
+
+CELL 19
+#@title Run AlphaFold2 with headless plotting backend
+af_env['MPLBACKEND']='Agg'
+run_live('/content/af2-env/bin/colabfold_batch /content/af2-run/row29.fasta /content/af2-run/results --model-type alphafold2_ptm --num-models 5 --num-recycle 3 --num-relax 0 --msa-mode mmseqs2_uniref_env',cwd='/content/af2-run',env=af_env)
+assert len(list(Path('/content/af2-run/results').glob('*unrelaxed_rank_*.pdb')))==5
+print('All five AlphaFold2 PDB files generated')
+
+
+/content/af2-env/bin/colabfold_batch /content/af2-run/row29.fasta /content/af2-run/results --model-type alphafold2_ptm --num-models 5 --num-recycle 3 --num-relax 0 --msa-mode mmseqs2_uniref_env
+
+WARNING: You are welcome to use the default MSA server, however keep in mind that it's a
+limited shared resource only capable of processing a few thousand MSAs per day. Please
+submit jobs only from a single IP address. We reserve the right to limit access to the
+server case-by-case when usage exceeds fair use. If you require more MSAs: You can 
+precompute all MSAs with `colabfold_search` or host your own API and pass it to `--host-url`
+
+2026-11-18 08:36:47,028 Running colabfold 1.6.3 (eb061aa6706959fdffe15e86d27ca08083d6ed8d)
+2026-11-18 08:36:47,487 Running on GPU
+2026-11-18 08:36:47,617 Found 5 citations for tools or databases
+2026-11-18 08:36:47,617 Query 1/1: assignment5_row29_af2 (length 100)
+2026-11-18 08:36:48,432 generated new fontManager
+
+  0%|          | 0/150 [elapsed: 00:00 remaining: ?]
+SUBMIT:   0%|          | 0/150 [elapsed: 00:00 remaining: ?]
+COMPLETE:   0%|          | 0/150 [elapsed: 00:00 remaining: ?]
+COMPLETE: 100%|██████████| 150/150 [elapsed: 00:00 remaining: 00:00]
+COMPLETE: 100%|██████████| 150/150 [elapsed: 00:00 remaining: 00:00]
+W1118 08:37:07.633052    2213 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+2026-11-18 08:36:50,298 Setting max_seq=512, max_extra_seq=147
+2026-11-18 08:37:32,812 alphafold2_ptm_model_1_seed_000 recycle=0 pLDDT=64.4 pTM=0.275
+2026-11-18 08:37:37,790 alphafold2_ptm_model_1_seed_000 recycle=1 pLDDT=63 pTM=0.27 tol=3.33
+2026-11-18 08:37:42,784 alphafold2_ptm_model_1_seed_000 recycle=2 pLDDT=63.1 pTM=0.277 tol=1.9
+2026-11-18 08:37:47,803 alphafold2_ptm_model_1_seed_000 recycle=3 pLDDT=63.3 pTM=0.279 tol=1.75
+2026-11-18 08:37:47,804 alphafold2_ptm_model_1_seed_000 took 46.8s (3 recycles)
+2026-11-18 08:37:52,868 alphafold2_ptm_model_2_seed_000 recycle=0 pLDDT=63.7 pTM=0.256
+2026-11-18 08:37:57,923 alphafold2_ptm_model_2_seed_000 recycle=1 pLDDT=61.9 pTM=0.262 tol=6.03
+2026-11-18 08:38:03,001 alphafold2_ptm_model_2_seed_000 recycle=2 pLDDT=62.6 pTM=0.281 tol=3.95
+2026-11-18 08:38:08,099 alphafold2_ptm_model_2_seed_000 recycle=3 pLDDT=63.2 pTM=0.299 tol=1.69
+2026-11-18 08:38:08,100 alphafold2_ptm_model_2_seed_000 took 20.3s (3 recycles)
+2026-11-18 08:38:13,232 alphafold2_ptm_model_3_seed_000 recycle=0 pLDDT=58.5 pTM=0.231
+2026-11-18 08:38:18,361 alphafold2_ptm_model_3_seed_000 recycle=1 pLDDT=58.1 pTM=0.235 tol=8.48
+2026-11-18 08:38:23,510 alphafold2_ptm_model_3_seed_000 recycle=2 pLDDT=58.5 pTM=0.24 tol=3.55
+2026-11-18 08:38:28,671 alphafold2_ptm_model_3_seed_000 recycle=3 pLDDT=58.9 pTM=0.246 tol=1.92
+2026-11-18 08:38:28,672 alphafold2_ptm_model_3_seed_000 took 20.6s (3 recycles)
+2026-11-18 08:38:33,876 alphafold2_ptm_model_4_seed_000 recycle=0 pLDDT=66.4 pTM=0.251
+2026-11-18 08:38:39,115 alphafold2_ptm_model_4_seed_000 recycle=1 pLDDT=67.8 pTM=0.27 tol=6.45
+2026-11-18 08:38:44,326 alphafold2_ptm_model_4_seed_000 recycle=2 pLDDT=69.2 pTM=0.305 tol=2.3
+2026-11-18 08:38:49,558 alphafold2_ptm_model_4_seed_000 recycle=3 pLDDT=69.8 pTM=0.322 tol=1.97
+2026-11-18 08:38:49,559 alphafold2_ptm_model_4_seed_000 took 20.9s (3 recycles)
+2026-11-18 08:38:54,820 alphafold2_ptm_model_5_seed_000 recycle=0 pLDDT=60.3 pTM=0.251
+2026-11-18 08:39:00,085 alphafold2_ptm_model_5_seed_000 recycle=1 pLDDT=62.6 pTM=0.277 tol=4.69
+2026-11-18 08:39:05,365 alphafold2_ptm_model_5_seed_000 recycle=2 pLDDT=63.6 pTM=0.303 tol=2.69
+2026-11-18 08:39:10,656 alphafold2_ptm_model_5_seed_000 recycle=3 pLDDT=63.6 pTM=0.314 tol=1.61
+2026-11-18 08:39:10,657 alphafold2_ptm_model_5_seed_000 took 21.1s (3 recycles)
+2026-11-18 08:39:10,673 reranking models by 'plddt' metric
+2026-11-18 08:39:10,674 rank_001_alphafold2_ptm_model_4_seed_000 pLDDT=69.8 pTM=0.322
+2026-11-18 08:39:10,674 rank_002_alphafold2_ptm_model_5_seed_000 pLDDT=63.6 pTM=0.314
+2026-11-18 08:39:10,674 rank_003_alphafold2_ptm_model_1_seed_000 pLDDT=63.3 pTM=0.279
+2026-11-18 08:39:10,674 rank_004_alphafold2_ptm_model_2_seed_000 pLDDT=63.2 pTM=0.299
+2026-11-18 08:39:10,675 rank_005_alphafold2_ptm_model_3_seed_000 pLDDT=58.9 pTM=0.246
+2026-11-18 08:39:12,013 Done
+All five AlphaFold2 PDB files generated
+

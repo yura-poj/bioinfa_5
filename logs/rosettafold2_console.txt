@@ -1,0 +1,909 @@
+CELL 5
+#@title Установка совместимых зависимостей; после выполнения перезапустите сеанс
+import sys
+import subprocess
+
+def install(args):
+    result = subprocess.run([sys.executable, "-m", "pip", "install", *args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if result.returncode:
+        print(result.stdout, flush=True)
+        result.check_returncode()
+    print("Installed:", " ".join(args), flush=True)
+
+if sys.version_info[:2] != (3, 12):
+    raise RuntimeError(f"Нужна среда Colab 2026.01 с Python 3.12, сейчас {sys.version}")
+install(["numpy==1.26.4"])
+install(["torch==2.4.0", "--index-url", "https://download.pytorch.org/whl/cu124"])
+# DGL is built from official v2.4.0 sources in the next two cells.
+print("Torch и NumPy установлены. Выполните две следующие ячейки сборки DGL, затем перезапустите сеанс.")
+
+
+Installed: numpy==1.26.4
+Installed: torch==2.4.0 --index-url https://download.pytorch.org/whl/cu124
+Looking in links: https://data.dgl.ai/wheels/torch-2.4/cu124/repo.html
+WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)'))': /wheels/torch-2.4/cu124/repo.html
+WARNING: Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)'))': /wheels/torch-2.4/cu124/repo.html
+WARNING: Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)'))': /wheels/torch-2.4/cu124/repo.html
+WARNING: Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)'))': /wheels/torch-2.4/cu124/repo.html
+WARNING: Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)'))': /wheels/torch-2.4/cu124/repo.html
+Could not fetch URL https://data.dgl.ai/wheels/torch-2.4/cu124/repo.html: There was a problem confirming the ssl certificate: HTTPSConnectionPool(host='data.dgl.ai', port=443): Max retries exceeded with url: /wheels/torch-2.4/cu124/repo.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)'))) - skipping
+ERROR: Could not find a version that satisfies the requirement dgl==2.4.0+cu124 (from versions: 0.1.0, 0.1.2, 0.1.3, 2.1.0)
+ERROR: No matching distribution found for dgl==2.4.0+cu124
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mCalledProcessError[0m                        Traceback (most recent call last)
+[0;32m/tmp/ipython-input-2916032691.py[0m in [0;36m<cell line: 0>[0;34m()[0m
+[1;32m     14[0m [0minstall[0m[0;34m([0m[0;34m[[0m[0;34m"numpy==1.26.4"[0m[0;34m][0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m     15[0m [0minstall[0m[0;34m([0m[0;34m[[0m[0;34m"torch==2.4.0"[0m[0;34m,[0m [0;34m"--index-url"[0m[0;34m,[0m [0;34m"https://download.pytorch.org/whl/cu124"[0m[0;34m][0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0;32m---> 16[0;31m [0minstall[0m[0;34m([0m[0;34m[[0m[0;34m"--no-deps"[0m[0;34m,[0m [0;34m"dgl==2.4.0+cu124"[0m[0;34m,[0m [0;34m"-f"[0m[0;34m,[0m [0;34m"https://data.dgl.ai/wheels/torch-2.4/cu124/repo.html"[0m[0;34m][0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0m[1;32m     17[0m [0mprint[0m[0;34m([0m[0;34m"Зависимости установлены. Перезапустите сеанс, затем выполните следующую ячейку."[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+
+[0;32m/tmp/ipython-input-2916032691.py[0m in [0;36minstall[0;34m(args)[0m
+[1;32m      7[0m     [0;32mif[0m [0mresult[0m[0;34m.[0m[0mreturncode[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+[1;32m      8[0m         [0mprint[0m[0;34m([0m[0mresult[0m[0;34m.[0m[0mstdout[0m[0;34m,[0m [0mflush[0m[0;34m=[0m[0;32mTrue[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0;32m----> 9[0;31m         [0mresult[0m[0;34m.[0m[0mcheck_returncode[0m[0;34m([0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0m[1;32m     10[0m     [0mprint[0m[0;34m([0m[0;34m"Installed:"[0m[0;34m,[0m [0;34m" "[0m[0;34m.[0m[0mjoin[0m[0;34m([0m[0margs[0m[0;34m)[0m[0;34m,[0m [0mflush[0m[0;34m=[0m[0;32mTrue[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m     11[0m [0;34m[0m[0m
+
+[0;32m/usr/lib/python3.12/subprocess.py[0m in [0;36mcheck_returncode[0;34m(self)[0m
+[1;32m    500[0m         [0;34m"""Raise CalledProcessError if the exit code is non-zero."""[0m[0;34m[0m[0;34m[0m[0m
+[1;32m    501[0m         [0;32mif[0m [0mself[0m[0;34m.[0m[0mreturncode[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+[0;32m--> 502[0;31m             raise CalledProcessError(self.returncode, self.args, self.stdout,
+[0m[1;32m    503[0m                                      self.stderr)
+[1;32m    504[0m [0;34m[0m[0m
+
+[0;31mCalledProcessError[0m: Command '['/usr/bin/python3', '-m', 'pip', 'install', '--no-deps', 'dgl==2.4.0+cu124', '-f', 'https://data.dgl.ai/wheels/torch-2.4/cu124/repo.html']' returned non-zero exit status 1.
+CELL 6
+import subprocess
+p = subprocess.run('git clone --branch v2.4.0 --depth 1 --recurse-submodules --shallow-submodules https://github.com/dmlc/dgl.git /content/dgl-source', shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print(p.stdout)
+p.check_returncode()
+
+
+Cloning into '/content/dgl-source'...
+Note: switching to 'c6c874bf7ea085beb04ea1487cfd216a0bacd6c1'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+Submodule 'third_party/GKlib' (https://github.com/KarypisLab/GKlib.git) registered for path 'third_party/GKlib'
+Submodule 'third_party/METIS' (https://github.com/KarypisLab/METIS.git) registered for path 'third_party/METIS'
+Submodule 'third_party/cccl' (https://github.com/NVIDIA/cccl.git) registered for path 'third_party/cccl'
+Submodule 'third_party/cuco' (https://github.com/NVIDIA/cuCollections.git) registered for path 'third_party/cuco'
+Submodule 'third_party/dlpack' (https://github.com/dmlc/dlpack.git) registered for path 'third_party/dlpack'
+Submodule 'third_party/dmlc-core' (https://github.com/dmlc/dmlc-core.git) registered for path 'third_party/dmlc-core'
+Submodule 'third_party/googletest' (https://github.com/google/googletest.git) registered for path 'third_party/googletest'
+Submodule 'third_party/liburing' (https://github.com/axboe/liburing.git) registered for path 'third_party/liburing'
+Submodule 'third_party/libxsmm' (https://github.com/hfp/libxsmm.git) registered for path 'third_party/libxsmm'
+Submodule 'third_party/nanoflann' (https://github.com/jlblancoc/nanoflann) registered for path 'third_party/nanoflann'
+Submodule 'third_party/pcg' (https://github.com/imneme/pcg-cpp.git) registered for path 'third_party/pcg'
+Submodule 'third_party/taskflow' (https://github.com/taskflow/taskflow.git) registered for path 'third_party/taskflow'
+Submodule 'third_party/tsl_robin_map' (https://github.com/Tessil/robin-map.git) registered for path 'third_party/tsl_robin_map'
+Cloning into '/content/dgl-source/third_party/GKlib'...
+Cloning into '/content/dgl-source/third_party/METIS'...
+Cloning into '/content/dgl-source/third_party/cccl'...
+Cloning into '/content/dgl-source/third_party/cuco'...
+Cloning into '/content/dgl-source/third_party/dlpack'...
+Cloning into '/content/dgl-source/third_party/dmlc-core'...
+Cloning into '/content/dgl-source/third_party/googletest'...
+Cloning into '/content/dgl-source/third_party/liburing'...
+Cloning into '/content/dgl-source/third_party/libxsmm'...
+Cloning into '/content/dgl-source/third_party/nanoflann'...
+Cloning into '/content/dgl-source/third_party/pcg'...
+Cloning into '/content/dgl-source/third_party/taskflow'...
+Cloning into '/content/dgl-source/third_party/tsl_robin_map'...
+From https://github.com/KarypisLab/GKlib
+ * branch            8bd6bad750b2b0d90800c632cf18e8ee93ad72d7 -> FETCH_HEAD
+Submodule path 'third_party/GKlib': checked out '8bd6bad750b2b0d90800c632cf18e8ee93ad72d7'
+From https://github.com/KarypisLab/METIS
+ * branch            e0f1b88b8efcb24ffa0ec55eabb78fbe61e58ae7 -> FETCH_HEAD
+Submodule path 'third_party/METIS': checked out 'e0f1b88b8efcb24ffa0ec55eabb78fbe61e58ae7'
+From https://github.com/NVIDIA/cccl
+ * branch              c67b1c3257be5115253f06d45a2d607b54234db4 -> FETCH_HEAD
+Submodule path 'third_party/cccl': checked out 'c67b1c3257be5115253f06d45a2d607b54234db4'
+From https://github.com/NVIDIA/cuCollections
+ * branch            6c0d7ee190a167c6976af0f7c628a43d13b78f38 -> FETCH_HEAD
+Submodule path 'third_party/cuco': checked out '6c0d7ee190a167c6976af0f7c628a43d13b78f38'
+From https://github.com/dmlc/dlpack
+ * branch            e2bdd3bee8cb6501558042633fa59144cc8b7f5f -> FETCH_HEAD
+Submodule path 'third_party/dlpack': checked out 'e2bdd3bee8cb6501558042633fa59144cc8b7f5f'
+From https://github.com/dmlc/dmlc-core
+ * branch            bfad207b448480783a1f428ae3d93d87032d8349 -> FETCH_HEAD
+Submodule path 'third_party/dmlc-core': checked out 'bfad207b448480783a1f428ae3d93d87032d8349'
+From https://github.com/google/googletest
+ * branch            f8d7d77c06936315286eb55f8de22cd23c188571 -> FETCH_HEAD
+Submodule path 'third_party/googletest': checked out 'f8d7d77c06936315286eb55f8de22cd23c188571'
+From https://github.com/axboe/liburing
+ * branch            f7dcc1ea60819475dffd3a45059e16f04381bee7 -> FETCH_HEAD
+Submodule path 'third_party/liburing': checked out 'f7dcc1ea60819475dffd3a45059e16f04381bee7'
+From https://github.com/hfp/libxsmm
+ * branch            80090603e43f6ddc870cc42e1403dd0af07744cc -> FETCH_HEAD
+Submodule path 'third_party/libxsmm': checked out '80090603e43f6ddc870cc42e1403dd0af07744cc'
+From https://github.com/jlblancoc/nanoflann
+ * branch            4c47ca200209550c5628c89803591f8a753c8181 -> FETCH_HEAD
+Submodule path 'third_party/nanoflann': checked out '4c47ca200209550c5628c89803591f8a753c8181'
+Submodule path 'third_party/pcg': checked out '428802d1a5634f96bcd0705fab379ff0113bcf13'
+From https://github.com/taskflow/taskflow
+ * branch            7d9e85b6b2e9bf501021f857f2f3cbe43bc37c85 -> FETCH_HEAD
+Submodule path 'third_party/taskflow': checked out '7d9e85b6b2e9bf501021f857f2f3cbe43bc37c85'
+From https://github.com/Tessil/robin-map
+ * branch            1115dad3ffa0994e3f43b693d9b9cc99944c64c1 -> FETCH_HEAD
+Submodule path 'third_party/tsl_robin_map': checked out '1115dad3ffa0994e3f43b693d9b9cc99944c64c1'
+
+
+CELL 7
+# Build official DGL v2.4.0 for Tesla T4
+import subprocess, sys
+commands = [
+'cmake -S /content/dgl-source -B /content/dgl-source/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TYPE=release -DUSE_CUDA=ON -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda -DCUDA_ARCH_NAME=Turing -DBUILD_GRAPHBOLT=OFF -DBUILD_SPARSE=OFF -DBUILD_TORCH=OFF -DBUILD_CPP_TEST=OFF -DUSE_LIBXSMM=OFF',
+'cmake --build /content/dgl-source/build --parallel 2',
+f'{sys.executable} -m pip install --no-deps --no-build-isolation /content/dgl-source/python'
+]
+for command in commands:
+    print(command, flush=True)
+    p = subprocess.Popen(command, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in p.stdout:
+        print(line, end='', flush=True)
+    if p.wait():
+        raise RuntimeError('Command failed: ' + command)
+
+
+cmake -S /content/dgl-source -B /content/dgl-source/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TYPE=release -DUSE_CUDA=ON -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda -DCUDA_ARCH_NAME=Turing -DBUILD_GRAPHBOLT=OFF -DBUILD_SPARSE=OFF -DBUILD_TORCH=OFF -DBUILD_CPP_TEST=OFF -DUSE_LIBXSMM=OFF
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Start configuring project dgl
+-- Build for release
+-- Build with CUDA support
+CMake Warning (dev) at cmake/util/FindCUDA.cmake:25 (include):
+  Policy CMP0146 is not set: The FindCUDA module is removed.  Run "cmake
+  --help-policy CMP0146" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+Call Stack (most recent call first):
+  cmake/modules/CUDA.cmake:3 (find_cuda)
+  CMakeLists.txt:142 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found CUDA: /usr/local/cuda (found version "12.5")
+-- Found CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda
+-- Found CUDA_CUDART_LIBRARY=/usr/local/cuda/lib64/libcudart.so
+-- Found CUDA_CUBLAS_LIBRARY=/usr/local/cuda/lib64/libcublas.so
+-- Found CUDA_CURAND_LIBRARY=/usr/local/cuda/lib64/libcurand.so
+-- Performing Test SUPPORT_CXX17
+-- Performing Test SUPPORT_CXX17 - Success
+-- Use external CCCL library for a consistent API and performance.
+-- Found OpenMP_C: -fopenmp (found version "4.5")
+-- Found OpenMP_CXX: -fopenmp (found version "4.5")
+-- Found OpenMP: TRUE (found version "4.5")
+-- Build with OpenMP.
+-- CMAKE_CXX_FLAGS: -Wall -fPIC  -O2 -DNDEBUG
+-- CUDA_NVCC_FLAGS: -Xcompiler;-Wall,-fPIC,,-O2,-DNDEBUG;-Xcompiler;-fopenmp;--expt-relaxed-constexpr;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_75,code=compute_75;--expt-extended-lambda;-Wno-deprecated-declarations;-std=c++17
+-- Looking for sys/epoll.h
+-- Looking for sys/epoll.h - found
+CMake Deprecation Warning at third_party/dmlc-core/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Found OpenMP_C: -fopenmp (found version "4.5")
+-- Found OpenMP_CXX: -fopenmp (found version "4.5")
+-- Looking for clock_gettime in rt
+-- Looking for clock_gettime in rt - found
+-- Looking for fopen64
+-- Looking for fopen64 - not found
+-- Looking for C++ include cxxabi.h
+-- Looking for C++ include cxxabi.h - found
+-- Looking for nanosleep
+-- Looking for nanosleep - found
+-- Looking for backtrace
+-- Looking for backtrace - found
+-- backtrace facility detected in default set of libraries
+-- Found Backtrace: /usr/include
+-- /content/dgl-source/third_party/dmlc-core/cmake/build_config.h.in -> include/dmlc/build_config.h
+-- Performing Test SUPPORT_MSSE2
+-- Performing Test SUPPORT_MSSE2 - Success
+-- Looking for execinfo.h
+-- Looking for execinfo.h - found
+-- Looking for getline
+-- Looking for getline - found
+-- Build with HugeCTR GPU embedding cache.
+-- Configuring done (7.1s)
+-- Generating done (0.2s)
+-- Build files have been written to: /content/dgl-source/build
+cmake --build /content/dgl-source/build --parallel 2
+[  1%] Building NVCC (Device) object CMakeFiles/gpu_cache.dir/third_party/HugeCTR/gpu_cache/src/gpu_cache_generated_nv_gpu_cache.cu.o
+[  2%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/auxapi.c.o
+[  2%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/balance.c.o
+[  3%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/bucketsort.c.o
+[  3%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/checkgraph.c.o
+[  3%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/coarsen.c.o
+[  4%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/compress.c.o
+[  4%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/contig.c.o
+[  5%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/debug.c.o
+[  5%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/fm.c.o
+[  5%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/fortran.c.o
+[  6%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/frename.c.o
+[  6%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/gklib.c.o
+[  7%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/graph.c.o
+[  7%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/initpart.c.o
+[  8%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/kmetis.c.o
+[  8%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/kwayfm.c.o
+[  8%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/kwayrefine.c.o
+[  9%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/mcutil.c.o
+[  9%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/mesh.c.o
+[ 10%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/meshpart.c.o
+[ 10%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/minconn.c.o
+[ 11%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/mincover.c.o
+[ 11%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/mmd.c.o
+[ 11%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/ometis.c.o
+[ 12%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/options.c.o
+[ 12%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/parmetis.c.o
+[ 13%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/pmetis.c.o
+[ 13%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/refine.c.o
+[ 14%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/separator.c.o
+[ 14%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/sfm.c.o
+[ 14%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/srefine.c.o
+[ 15%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/stat.c.o
+[ 15%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/timing.c.o
+[ 16%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/util.c.o
+[ 16%] Building C object third_party/METIS/libmetis/CMakeFiles/metis.dir/wspace.c.o
+[ 17%] Linking C static library libmetis.a
+[ 17%] Built target metis
+[ 17%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/config.cc.o
+[ 17%] Linking CXX static library libgpu_cache.a
+[ 17%] Built target gpu_cache
+[ 17%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/b64.c.o
+[ 17%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/blas.c.o
+[ 18%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/cache.c.o
+[ 18%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/csr.c.o
+[ 19%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/data.cc.o
+[ 20%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/error.c.o
+[ 20%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/evaluate.c.o
+[ 20%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/fkvkselect.c.o
+[ 21%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/fs.c.o
+[ 21%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/getopt.c.o
+[ 22%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/gk_util.c.o
+[ 22%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/gkregex.c.o
+[ 23%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/graph.c.o
+[ 23%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/htable.c.o
+[ 23%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/io.c.o
+[ 24%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/itemsets.c.o
+[ 24%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/mcore.c.o
+[ 25%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/memory.c.o
+[ 25%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/pqueue.c.o
+[ 26%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/random.c.o
+[ 26%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/rw.c.o
+[ 26%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/seq.c.o
+[ 27%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/sort.c.o
+[ 27%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/string.c.o
+[ 28%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/timers.c.o
+[ 28%] Building C object CMakeFiles/GKlib.dir/third_party/GKlib/tokenizer.c.o
+[ 29%] Linking C static library libGKlib.a
+[ 29%] Built target GKlib
+[ 29%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io.cc.o
+[ 29%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/recordio.cc.o
+[ 30%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io/line_split.cc.o
+[ 30%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io/recordio_split.cc.o
+[ 31%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io/indexed_recordio_split.cc.o
+[ 31%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io/input_split_base.cc.o
+[ 32%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io/filesys.cc.o
+[ 32%] Building CXX object third_party/dmlc-core/CMakeFiles/dmlc.dir/src/io/local_filesys.cc.o
+[ 32%] Linking CXX static library libdmlc.a
+[ 32%] Built target dmlc
+[ 33%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/runtime/cuda/dgl_generated_gpu_cache.cu.o
+[ 33%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_array_cumsum.cu.o
+[ 33%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_array_index_select.cu.o
+[ 34%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_array_nonzero.cu.o
+[ 34%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_array_op_impl.cu.o
+[ 35%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_array_scatter.cu.o
+[ 35%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_array_sort.cu.o
+[ 35%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_coo2csr.cu.o
+[ 36%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_coo_sort.cu.o
+[ 36%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_csr2coo.cu.o
+[ 37%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_csr_get_data.cu.o
+[ 37%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_csr_mm.cu.o
+[ 38%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_csr_sort.cu.o
+[ 38%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_csr_sum.cu.o
+[ 38%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_cuda_filter.cu.o
+[ 39%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_disjoint_union.cu.o
+[ 39%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_gather_mm.cu.o
+[ 40%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_labor_sampling.cu.o
+[ 40%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_negative_sampling.cu.o
+[ 41%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_rowwise_sampling.cu.o
+[ 41%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_rowwise_sampling_prob.cu.o
+[ 41%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_sddmm.cu.o
+[ 42%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_sddmm_hetero_coo.cu.o
+[ 42%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_sddmm_hetero_csr.cu.o
+[ 43%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_segment_reduce.cu.o
+[ 43%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_spmat_op_impl_coo.cu.o
+[ 44%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_spmat_op_impl_csr.cu.o
+[ 44%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_spmm.cu.o
+[ 44%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_spmm_hetero.cu.o
+[ 45%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/dgl_generated_utils.cu.o
+[ 45%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/array/cuda/uvm/dgl_generated_array_index_select_uvm.cu.o
+[ 46%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/geometry/cuda/dgl_generated_edge_coarsening_impl.cu.o
+[ 46%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/geometry/cuda/dgl_generated_geometry_op_impl.cu.o
+[ 47%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/dgl_generated_frequency_hashmap.cu.o
+[ 47%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/dgl_generated_get_node_types_gpu.cu.o
+[ 47%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/dgl_generated_randomwalk_gpu.cu.o
+[ 48%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/graph/transform/cuda/dgl_generated_cuda_compact_graph.cu.o
+[ 48%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/graph/transform/cuda/dgl_generated_cuda_to_block.cu.o
+[ 49%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/graph/transform/cuda/dgl_generated_knn.cu.o
+[ 49%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/partition/cuda/dgl_generated_partition_op.cu.o
+[ 49%] Building NVCC (Device) object CMakeFiles/dgl.dir/src/runtime/cuda/dgl_generated_cuda_hashtable.cu.o
+[ 49%] Building CXX object CMakeFiles/dgl.dir/src/array/array.cc.o
+[ 50%] Building CXX object CMakeFiles/dgl.dir/src/array/array_arith.cc.o
+[ 50%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_cumsum.cc.o
+[ 51%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_index_select.cc.o
+[ 51%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_nonzero.cc.o
+[ 51%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_op_impl.cc.o
+[ 52%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_pack.cc.o
+[ 52%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_repeat.cc.o
+[ 53%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_scatter.cc.o
+[ 53%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/array_sort.cc.o
+[ 54%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/concurrent_id_hash_map.cc.o
+[ 54%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/coo_coalesce.cc.o
+[ 54%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/coo_linegraph.cc.o
+[ 55%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/coo_remove.cc.o
+[ 55%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/coo_sort.cc.o
+[ 56%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_get_data.cc.o
+[ 56%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_mm.cc.o
+[ 57%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_remove.cc.o
+[ 57%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_sort.cc.o
+[ 57%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_sum.cc.o
+[ 58%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_to_simple.cc.o
+[ 58%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/csr_union.cc.o
+[ 59%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/disjoint_union.cc.o
+[ 59%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/gather_mm.cc.o
+[ 59%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/labor_sampling.cc.o
+[ 60%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/negative_sampling.cc.o
+[ 60%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/rowwise_sampling.cc.o
+[ 61%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/rowwise_topk.cc.o
+[ 61%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/sddmm.cc.o
+[ 62%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/segment_reduce.cc.o
+[ 62%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/spmat_op_impl_coo.cc.o
+[ 62%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/spmat_op_impl_csr.cc.o
+[ 63%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/spmm.cc.o
+[ 63%] Building CXX object CMakeFiles/dgl.dir/src/array/cpu/traversal.cc.o
+[ 64%] Building CXX object CMakeFiles/dgl.dir/src/array/filter.cc.o
+[ 64%] Building CXX object CMakeFiles/dgl.dir/src/array/kernel.cc.o
+[ 65%] Building CXX object CMakeFiles/dgl.dir/src/array/libra_partition.cc.o
+[ 65%] Building CXX object CMakeFiles/dgl.dir/src/array/union_partition.cc.o
+[ 65%] Building CXX object CMakeFiles/dgl.dir/src/array/uvm_array.cc.o
+[ 66%] Building CXX object CMakeFiles/dgl.dir/src/bcast.cc.o
+[ 66%] Building CXX object CMakeFiles/dgl.dir/src/c_api_common.cc.o
+[ 67%] Building CXX object CMakeFiles/dgl.dir/src/geometry/cpu/geometry_op_impl.cc.o
+[ 67%] Building CXX object CMakeFiles/dgl.dir/src/geometry/geometry.cc.o
+[ 68%] Building CXX object CMakeFiles/dgl.dir/src/partition/ndarray_partition.cc.o
+[ 68%] Building CXX object CMakeFiles/dgl.dir/src/random/cpu/choice.cc.o
+[ 68%] Building CXX object CMakeFiles/dgl.dir/src/random/random.cc.o
+[ 69%] Building CXX object CMakeFiles/dgl.dir/src/runtime/c_object_api.cc.o
+[ 69%] Building CXX object CMakeFiles/dgl.dir/src/runtime/c_runtime_api.cc.o
+[ 70%] Building CXX object CMakeFiles/dgl.dir/src/runtime/config.cc.o
+[ 70%] Building CXX object CMakeFiles/dgl.dir/src/runtime/cpu_device_api.cc.o
+[ 71%] Building CXX object CMakeFiles/dgl.dir/src/runtime/dlpack_convert.cc.o
+[ 71%] Building CXX object CMakeFiles/dgl.dir/src/runtime/dso_module.cc.o
+[ 71%] Building CXX object CMakeFiles/dgl.dir/src/runtime/file_util.cc.o
+[ 72%] Building CXX object CMakeFiles/dgl.dir/src/runtime/module.cc.o
+[ 72%] Building CXX object CMakeFiles/dgl.dir/src/runtime/module_util.cc.o
+[ 73%] Building CXX object CMakeFiles/dgl.dir/src/runtime/ndarray.cc.o
+[ 73%] Building CXX object CMakeFiles/dgl.dir/src/runtime/object.cc.o
+[ 73%] Building CXX object CMakeFiles/dgl.dir/src/runtime/registry.cc.o
+[ 74%] Building CXX object CMakeFiles/dgl.dir/src/runtime/resource_manager.cc.o
+[ 74%] Building CXX object CMakeFiles/dgl.dir/src/runtime/semaphore_wrapper.cc.o
+[ 75%] Building CXX object CMakeFiles/dgl.dir/src/runtime/shared_mem.cc.o
+[ 75%] Building CXX object CMakeFiles/dgl.dir/src/runtime/system_lib_module.cc.o
+[ 76%] Building CXX object CMakeFiles/dgl.dir/src/runtime/tensordispatch.cc.o
+[ 76%] Building CXX object CMakeFiles/dgl.dir/src/runtime/thread_pool.cc.o
+[ 76%] Building CXX object CMakeFiles/dgl.dir/src/runtime/threading_backend.cc.o
+[ 77%] Building CXX object CMakeFiles/dgl.dir/src/runtime/utils.cc.o
+[ 77%] Building CXX object CMakeFiles/dgl.dir/src/runtime/workspace_pool.cc.o
+[ 78%] Building CXX object CMakeFiles/dgl.dir/src/api/api_container.cc.o
+[ 78%] Building CXX object CMakeFiles/dgl.dir/src/api/api_test.cc.o
+[ 79%] Building CXX object CMakeFiles/dgl.dir/src/graph/creators.cc.o
+[ 79%] Building CXX object CMakeFiles/dgl.dir/src/graph/gk_ops.cc.o
+[ 79%] Building CXX object CMakeFiles/dgl.dir/src/graph/graph.cc.o
+[ 80%] Building CXX object CMakeFiles/dgl.dir/src/graph/graph_apis.cc.o
+[ 80%] Building CXX object CMakeFiles/dgl.dir/src/graph/graph_op.cc.o
+[ 81%] Building CXX object CMakeFiles/dgl.dir/src/graph/graph_traversal.cc.o
+[ 81%] Building CXX object CMakeFiles/dgl.dir/src/graph/heterograph.cc.o
+[ 82%] Building CXX object CMakeFiles/dgl.dir/src/graph/heterograph_capi.cc.o
+[ 82%] Building CXX object CMakeFiles/dgl.dir/src/graph/immutable_graph.cc.o
+[ 82%] Building CXX object CMakeFiles/dgl.dir/src/graph/metis_partition.cc.o
+[ 83%] Building CXX object CMakeFiles/dgl.dir/src/graph/nodeflow.cc.o
+[ 83%] Building CXX object CMakeFiles/dgl.dir/src/graph/pickle.cc.o
+[ 84%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampler.cc.o
+[ 84%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/negative/global_uniform.cc.o
+[ 84%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/neighbor/neighbor.cc.o
+[ 85%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/get_node_types_cpu.cc.o
+[ 85%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/node2vec.cc.o
+[ 86%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/node2vec_cpu.cc.o
+[ 86%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/randomwalk_cpu.cc.o
+[ 87%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/randomwalk_with_restart_cpu.cc.o
+[ 87%] Building CXX object CMakeFiles/dgl.dir/src/graph/sampling/randomwalks/randomwalks.cc.o
+[ 87%] Building CXX object CMakeFiles/dgl.dir/src/graph/serialize/dglgraph_serialize.cc.o
+[ 88%] Building CXX object CMakeFiles/dgl.dir/src/graph/serialize/graph_serialize.cc.o
+[ 88%] Building CXX object CMakeFiles/dgl.dir/src/graph/serialize/heterograph_serialize.cc.o
+[ 89%] Building CXX object CMakeFiles/dgl.dir/src/graph/serialize/tensor_serialize.cc.o
+[ 89%] Building CXX object CMakeFiles/dgl.dir/src/graph/serialize/zerocopy_serializer.cc.o
+[ 90%] Building CXX object CMakeFiles/dgl.dir/src/graph/shared_mem_manager.cc.o
+[ 90%] Building CXX object CMakeFiles/dgl.dir/src/graph/subgraph.cc.o
+[ 90%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/compact.cc.o
+[ 91%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/cpu/knn.cc.o
+[ 91%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/knn.cc.o
+[ 92%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/line_graph.cc.o
+[ 92%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/metis_partition_hetero.cc.o
+[ 93%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/partition_hetero.cc.o
+[ 93%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/remove_edges.cc.o
+[ 93%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/to_block.cc.o
+[ 94%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/to_simple.cc.o
+[ 94%] Building CXX object CMakeFiles/dgl.dir/src/graph/transform/union_partition.cc.o
+[ 95%] Building CXX object CMakeFiles/dgl.dir/src/graph/traversal.cc.o
+[ 95%] Building CXX object CMakeFiles/dgl.dir/src/graph/unit_graph.cc.o
+[ 96%] Building CXX object CMakeFiles/dgl.dir/src/scheduler/scheduler.cc.o
+[ 96%] Building CXX object CMakeFiles/dgl.dir/src/scheduler/scheduler_apis.cc.o
+[ 96%] Building CXX object CMakeFiles/dgl.dir/src/rpc/network/common.cc.o
+[ 97%] Building CXX object CMakeFiles/dgl.dir/src/rpc/network/msg_queue.cc.o
+[ 97%] Building CXX object CMakeFiles/dgl.dir/src/rpc/network/socket_communicator.cc.o
+[ 98%] Building CXX object CMakeFiles/dgl.dir/src/rpc/network/socket_pool.cc.o
+[ 98%] Building CXX object CMakeFiles/dgl.dir/src/rpc/network/tcp_socket.cc.o
+[ 98%] Building CXX object CMakeFiles/dgl.dir/src/rpc/rpc.cc.o
+[ 99%] Building CXX object CMakeFiles/dgl.dir/src/array/cuda/csr_transpose.cc.o
+[ 99%] Building CXX object CMakeFiles/dgl.dir/src/runtime/cuda/cuda_device_api.cc.o
+[100%] Linking CXX shared library libdgl.so
+[100%] Built target dgl
+/usr/bin/python3 -m pip install --no-deps --no-build-isolation /content/dgl-source/python
+Processing ./dgl-source/python
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Building wheels for collected packages: dgl
+  Building wheel for dgl (setup.py): started
+  Building wheel for dgl (setup.py): finished with status 'done'
+  Created wheel for dgl: filename=dgl-2.4.0-cp312-cp312-linux_x86_64.whl size=27256709 sha256=dc4d99b8c4870adee814fa5c56c243fa6e70057c325e102b7510b9efc0f09e1b
+  Stored in directory: /tmp/pip-ephem-wheel-cache-omqacsx6/wheels/6c/ab/eb/90defeebea439373df16691fa9c99df0e537227ae79e0d3e9c
+Successfully built dgl
+Installing collected packages: dgl
+Successfully installed dgl-2.4.0
+
+CELL 8
+#@title Проверка DGL и вычислений на GPU после перезапуска
+import sys, torch, numpy as np, dgl
+import dgl.function as fn
+from dgl.nn.functional import edge_softmax
+print('Python:',sys.version,'Torch:',torch.__version__,'CUDA:',torch.version.cuda,'DGL:',dgl.__version__,'NumPy:',np.__version__)
+assert torch.__version__.split('+')[0] == '2.4.0'
+assert np.__version__ == '1.26.4'
+assert torch.cuda.is_available()
+g=dgl.graph(([0,1,2,0],[1,2,0,2]),device='cuda')
+g.ndata['h']=torch.tensor([[1.],[2.],[3.]],device='cuda')
+g.update_all(fn.copy_u('h','m'),fn.sum('m','out'))
+assert torch.allclose(g.ndata['out'],torch.tensor([[3.],[1.],[3.]],device='cuda'))
+a=edge_softmax(g,torch.zeros(4,1,device='cuda'))
+assert torch.allclose(a,torch.tensor([[1.],[.5],[1.],[.5]],device='cuda'))
+print('DGL CUDA graph/message-passing/edge-softmax OK',torch.cuda.get_device_name(0))
+
+
+DGL backend not selected or invalid.  Assuming PyTorch for now.
+
+Setting the default backend to "pytorch". You can change it in the ~/.dgl/config.json file or export the DGLBACKEND environment variable.  Valid options are: pytorch, mxnet, tensorflow (all lowercase)
+Python: 3.12.12 (main, Oct 10 2025, 08:52:57) [GCC 11.4.0] Torch: 2.4.0+cu124 CUDA: 12.4 DGL: 2.4.0 NumPy: 1.26.4
+DGL CUDA graph/message-passing/edge-softmax OK Tesla T4
+
+CELL 9
+%%time
+#@title setup **RoseTTAFold2** (~1m)
+params = "RF2_apr23" # @param ["RF2_apr23","RF2_jan24"]
+
+import os, time, sys, subprocess
+
+def run_shell(command):
+  result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+  if result.returncode:
+    print(result.stdout, flush=True)
+    result.check_returncode()
+  print("OK:", command, flush=True)
+  return result.returncode
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+
+if params == "RF2_jan24" and not os.path.isfile(f"{params}.tgz"):
+  # send param download into background
+  run_shell("apt-get update -qq && apt-get install -y aria2 && aria2c -q -x 16 https://files.ipd.uw.edu/dimaio/RF2_jan24.tgz")
+
+if params == "RF2_apr23" and not os.path.isfile(f"{params}.tgz"):
+  # send param download into background
+  run_shell("apt-get update -qq && apt-get install -y aria2 && aria2c -q -x 16 https://files.ipd.uw.edu/dimaio/RF2_apr23.tgz")
+
+if not os.path.isdir("RoseTTAFold2"):
+  print("install RoseTTAFold2")
+  run_shell("git clone https://github.com/uw-ipd/RoseTTAFold2.git")
+  run_shell("pip install py3Dmol")
+
+  # 17Mar2024: adding --no-dependencies to avoid installing nvidia-cuda-* dependencies
+  # 25Aug2025: updating dgi install to work with latest pytorch
+  # DGL 2.4.0 is built from official sources in the bootstrap cells.
+  run_shell("pip install --no-dependencies e3nn==0.5.5 opt_einsum_fx")
+  run_shell("cd RoseTTAFold2/SE3Transformer; pip install .")
+
+  run_shell("wget https://raw.githubusercontent.com/sokrypton/ColabFold/main/colabfold/colabfold.py -O colabfold_utils.py")
+
+  #run_shell("pip install dgl -f https://data.dgl.ai/wheels/cu121/repo.html")
+  #run_shell("cd RoseTTAFold2/SE3Transformer; pip -q install --no-cache-dir -r requirements.txt; pip -q install .")
+  #run_shell("wget https://raw.githubusercontent.com/sokrypton/ColabFold/beta/colabfold/mmseqs/api.py")
+
+  # install hhsuite
+  print("install hhsuite")
+  os.makedirs("hhsuite", exist_ok=True)
+  run_shell(f"curl -fsSL https://github.com/soedinglab/hh-suite/releases/download/v3.3.0/hhsuite-3.3.0-SSE2-Linux.tar.gz | tar xz -C hhsuite/")
+
+if not os.path.isfile(f"{params}.pt"):
+  time.sleep(5)
+
+if os.path.isfile(f"{params}.tgz.aria2"):
+  print("downloading RoseTTAFold2 params")
+  while os.path.isfile(f"{params}.tgz.aria2"):
+    time.sleep(5)
+
+if not os.path.isfile(f"{params}.pt"):
+  run_shell(f"tar -zxvf {params}.tgz")
+  if params == "RF2_apr23":
+    run_shell(f"mv weights/{params}.pt .")
+
+if not "IMPORTED" in dir():
+  if 'RoseTTAFold2/network' not in sys.path:
+    os.environ["DGLBACKEND"] = "pytorch"
+    sys.path.append('RoseTTAFold2/network')
+  if "hhsuite" not in os.environ['PATH']:
+    os.environ['PATH'] += ":hhsuite/bin:hhsuite/scripts"
+
+  import matplotlib.pyplot as plt
+  from google.colab import files
+  import numpy as np
+  from parsers import parse_a3m
+  #from api import run_mmseqs2
+  from colabfold_utils import run_mmseqs2
+  import py3Dmol
+  import torch
+  from string import ascii_uppercase, ascii_lowercase
+  import hashlib, re, os
+  import random
+
+  def get_hash(x): return hashlib.sha1(x.encode()).hexdigest()
+  alphabet_list = list(ascii_uppercase+ascii_lowercase)
+  from collections import OrderedDict, Counter
+
+  IMPORTED = True
+
+if not "pred" in dir() or params_sele != params:
+  from predict import Predictor
+  print("compile RoseTTAFold2")
+
+  if (torch.cuda.is_available()):
+    pred = Predictor(f"{params}.pt", torch.device("cuda:0"))
+  else:
+    print ("WARNING: using CPU")
+    pred = Predictor(f"{params}.pt", torch.device("cpu"))
+  params_sele = params
+
+def get_unique_sequences(seq_list):
+    unique_seqs = list(OrderedDict.fromkeys(seq_list))
+    return unique_seqs
+
+def run_mmseqs2_wrapper(*args, **kwargs):
+  kwargs['user_agent'] = "colabfold/rosettafold2"
+  return run_mmseqs2(*args, **kwargs)
+
+def get_msa(seq, jobname, cov=50, id=90, max_msa=2048,
+            mode="unpaired_paired"):
+
+  assert mode in ["unpaired","paired","unpaired_paired"]
+  seqs = [seq] if isinstance(seq,str) else seq
+
+  # collapse homooligomeric sequences
+  counts = Counter(seqs)
+  u_seqs = list(counts.keys())
+  u_nums = list(counts.values())
+
+  # expand homooligomeric sequences
+  first_seq = "/".join(sum([[x]*n for x,n in zip(u_seqs,u_nums)],[]))
+  msa = [first_seq]
+
+  path = os.path.join(jobname,"msa")
+  os.makedirs(path, exist_ok=True)
+  if mode in ["paired","unpaired_paired"] and len(u_seqs) > 1:
+    print("getting paired MSA")
+    out_paired = run_mmseqs2_wrapper(u_seqs, f"{path}/", use_pairing=True)
+    headers, sequences = [],[]
+    for a3m_lines in out_paired:
+      n = -1
+      for line in a3m_lines.split("\n"):
+        if len(line) > 0:
+          if line.startswith(">"):
+            n += 1
+            if len(headers) < (n + 1):
+              headers.append([])
+              sequences.append([])
+            headers[n].append(line)
+          else:
+            sequences[n].append(line)
+    # filter MSA
+    with open(f"{path}/paired_in.a3m","w") as handle:
+      for n,sequence in enumerate(sequences):
+        handle.write(f">n{n}\n{''.join(sequence)}\n")
+    run_shell(f"hhfilter -i {path}/paired_in.a3m -id {id} -cov {cov} -o {path}/paired_out.a3m")
+    with open(f"{path}/paired_out.a3m","r") as handle:
+      for line in handle:
+        if line.startswith(">"):
+          n = int(line[2:])
+          xs = sequences[n]
+          # expand homooligomeric sequences
+          xs = ['/'.join([x]*num) for x,num in zip(xs,u_nums)]
+          msa.append('/'.join(xs))
+
+  if len(msa) < max_msa and (mode in ["unpaired","unpaired_paired"] or len(u_seqs) == 1):
+    print("getting unpaired MSA")
+    out = run_mmseqs2_wrapper(u_seqs,f"{path}/")
+    Ls = [len(seq) for seq in u_seqs]
+    sub_idx = []
+    sub_msa = []
+    sub_msa_num = 0
+    for n,a3m_lines in enumerate(out):
+      sub_msa.append([])
+      with open(f"{path}/in_{n}.a3m","w") as handle:
+        handle.write(a3m_lines)
+      # filter
+      run_shell(f"hhfilter -i {path}/in_{n}.a3m -id {id} -cov {cov} -o {path}/out_{n}.a3m")
+      with open(f"{path}/out_{n}.a3m","r") as handle:
+        for line in handle:
+          if not line.startswith(">"):
+            xs = ['-'*l for l in Ls]
+            xs[n] = line.rstrip()
+            # expand homooligomeric sequences
+            xs = ['/'.join([x]*num) for x,num in zip(xs,u_nums)]
+            sub_msa[-1].append('/'.join(xs))
+            sub_msa_num += 1
+      sub_idx.append(list(range(len(sub_msa[-1]))))
+
+    while len(msa) < max_msa and sub_msa_num > 0:
+      for n in range(len(sub_idx)):
+        if len(sub_idx[n]) > 0:
+          msa.append(sub_msa[n][sub_idx[n].pop(0)])
+          sub_msa_num -= 1
+        if len(msa) == max_msa:
+          break
+
+  with open(f"{jobname}/msa.a3m","w") as handle:
+    for n,sequence in enumerate(msa):
+      handle.write(f">n{n}\n{sequence}\n")
+
+OK: apt-get update -qq && apt-get install -y aria2 && aria2c -q -x 16 https://files.ipd.uw.edu/dimaio/RF2_apr23.tgz
+install RoseTTAFold2
+OK: git clone https://github.com/uw-ipd/RoseTTAFold2.git
+OK: pip install py3Dmol
+OK: pip install --no-dependencies e3nn==0.5.5 opt_einsum_fx
+OK: cd RoseTTAFold2/SE3Transformer; pip install .
+OK: wget https://raw.githubusercontent.com/sokrypton/ColabFold/main/colabfold/colabfold.py -O colabfold_utils.py
+install hhsuite
+OK: curl -fsSL https://github.com/soedinglab/hh-suite/releases/download/v3.3.0/hhsuite-3.3.0-SSE2-Linux.tar.gz | tar xz -C hhsuite/
+OK: tar -zxvf RF2_apr23.tgz
+OK: mv weights/RF2_apr23.pt .
+
+/content/RoseTTAFold2/network/SE3_network.py:78: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  @torch.cuda.amp.autocast(enabled=False)
+
+compile RoseTTAFold2
+CPU times: user 15.4 s, sys: 1.55 s, total: 17 s
+Wall time: 2min 35s
+
+CELL 10
+#@title ###run **RoseTTAFold2**
+sequence = "MASVQQGEKQLFEKFWRGTFKAVATPRPESIIVASITARKPLPRTEPQNNPVVPAQDGPSEKLGQHLATEPLGTNSWERDKTCRELGATRGHSASHDKDL" #@param {type:"string"}
+jobname = "assignment5_row29_rf2" #@param {type:"string"}
+
+#@markdown symmetry settings
+sym = "X" #@param ["X","C", "D", "T", "I", "O"]
+order = 1 #@param ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"] {type:"raw"}
+msa_concat_mode = "diag" #@param ["diag", "repeat", "default"]
+
+#@markdown msa settings
+msa_method = "mmseqs2" #@param ["mmseqs2","single_sequence","custom_a3m"]
+pair_mode = "unpaired_paired" #@param ["unpaired_paired","paired","unpaired"] {type:"string"}
+collapse_identical = False #@param {type:"boolean"}
+
+#@markdown RoseTTAFold2 settings
+num_recycles = 6 #@param [0, 1, 3, 6, 12, 24] {type:"raw"}
+
+#@markdown stochastic settings
+use_mlm = False #@param {type:"boolean"}
+use_dropout = False #@param {type:"boolean"}
+max_msa = 256 #@param [16, 32, 64, 128, 256, 512] {type:"raw"}
+random_seed = 0 #@param {type:"integer"}
+num_models = 1 #@param ["1", "5", "10", "15", "20", "25"] {type:"raw"}
+
+# process
+max_extra_msa = max_msa * 8
+
+sequence = re.sub("[^A-Z:]", "", sequence.replace("/",":").upper())
+sequence = re.sub(":+",":",sequence)
+sequence = re.sub("^[:]+","",sequence)
+sequence = re.sub("[:]+$","",sequence)
+
+if sym in ["X","C"]:
+  copies = order
+elif sym in ["D"]:
+  copies = order * 2
+else:
+  copies = {"T":12,"O":24,"I":60}[sym]
+  order = ""
+symm = sym + str(order)
+
+sequences = sequence.replace(":","/").split("/")
+if collapse_identical:
+  u_sequences = get_unique_sequences(sequences)
+else:
+  u_sequences = sequences
+sequences = sum([u_sequences] * copies,[])
+lengths = [len(s) for s in sequences]
+
+# TODO
+#subcrop = 1000 if sum(lengths) > 1400 else -1
+
+subcrop = -1
+topk = 1536
+
+
+sequence = "/".join(sequences)
+jobname = jobname+"_"+symm+"_"+get_hash(sequence)[:5]
+
+print(f"jobname: {jobname}")
+print(f"lengths: {lengths}")
+
+os.makedirs(jobname, exist_ok=True)
+if msa_method == "mmseqs2":
+  get_msa(u_sequences, jobname, mode=pair_mode, max_msa=max_extra_msa)
+
+elif msa_method == "single_sequence":
+  u_sequence = "/".join(u_sequences)
+  with open(f"{jobname}/msa.a3m","w") as a3m:
+    a3m.write(f">{jobname}\n{u_sequence}\n")
+
+elif msa_method == "custom_a3m":
+  print("upload custom a3m")
+  msa_dict = files.upload()
+  lines = msa_dict[list(msa_dict.keys())[0]].decode().splitlines()
+  a3m_lines = []
+  for line in lines:
+    line = line.replace("\x00","")
+    if len(line) > 0 and not line.startswith('#'):
+      a3m_lines.append(line)
+
+  with open(f"{jobname}/msa.a3m","w") as a3m:
+    a3m.write("\n".join(a3m_lines))
+
+best_plddt = None
+best_seed = None
+for seed in range(random_seed,random_seed+num_models):
+  torch.manual_seed(seed)
+  random.seed(seed)
+  np.random.seed(seed)
+  npz = f"{jobname}/rf2_seed{seed}_00.npz"
+  pred.predict(inputs=[f"{jobname}/msa.a3m"],
+               out_prefix=f"{jobname}/rf2_seed{seed}",
+               symm=symm,
+               ffdb=None, #TODO (templates),
+               n_recycles=num_recycles,
+               msa_mask=0.15 if use_mlm else 0.0,
+               msa_concat_mode=msa_concat_mode,
+               nseqs=max_msa,
+               nseqs_full=max_extra_msa,
+               subcrop=subcrop,
+               topk=topk,
+               is_training=use_dropout)
+  plddt = np.load(npz)["lddt"].mean()
+  if best_plddt is None or plddt > best_plddt:
+    best_plddt = plddt
+    best_seed = seed
+
+jobname: assignment5_row29_rf2_X1_ed668
+lengths: [100]
+getting unpaired MSA
+
+PENDING:   0%|          | 0/150 [elapsed: 00:00 remaining: ?]ERROR:colabfold_utils:Sleeping for 8s. Reason: PENDING
+RUNNING:   5%|▌         | 8/150 [elapsed: 00:09 remaining: 02:46]ERROR:colabfold_utils:Sleeping for 9s. Reason: RUNNING
+RUNNING:  11%|█▏        | 17/150 [elapsed: 00:19 remaining: 02:27]ERROR:colabfold_utils:Sleeping for 5s. Reason: RUNNING
+RUNNING:  15%|█▍        | 22/150 [elapsed: 00:24 remaining: 02:23]ERROR:colabfold_utils:Sleeping for 10s. Reason: RUNNING
+COMPLETE: 100%|██████████| 150/150 [elapsed: 00:36 remaining: 00:00]
+OK: hhfilter -i assignment5_row29_rf2_X1_ed668/msa/in_0.a3m -id 90 -cov 50 -o assignment5_row29_rf2_X1_ed668/msa/out_0.a3m
+
+
+
+N=190 L=100
+
+/content/RoseTTAFold2/network/predict.py:509: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with torch.cuda.amp.autocast(True):
+
+recycle 0 plddt 0.465 pae 23.891 rmsd 18.183
+recycle 1 plddt 0.525 pae 24.062 rmsd 6.536
+recycle 2 plddt 0.533 pae 23.922 rmsd 4.413
+recycle 3 plddt 0.541 pae 23.875 rmsd 3.079
+recycle 4 plddt 0.543 pae 23.828 rmsd 2.457
+recycle 5 plddt 0.539 pae 23.734 rmsd 2.441
+recycle 6 plddt 0.551 pae 23.625 rmsd 2.373
+runtime=13.11 vram=0.51
+
+CELL 12
+#@title Download prediction
+
+#@markdown Once this cell has been executed, a zip-archive with
+#@markdown the obtained prediction will be automatically downloaded
+#@markdown to your computer.
+
+# add settings file
+settings_path = f"{jobname}/settings.txt"
+with open(settings_path, "w") as text_file:
+  text_file.write(f"method=RoseTTAFold2\n")
+  text_file.write(f"params={params}\n")
+  text_file.write(f"sequence={sequence}\n")
+  text_file.write(f"sym={sym}\n")
+  text_file.write(f"order={order}\n")
+  text_file.write(f"msa_concat_mode={msa_concat_mode}\n")
+  text_file.write(f"collapse_identical={collapse_identical}")
+  text_file.write(f"random_seed={random_seed}\n")
+  text_file.write(f"msa_method={msa_method}\n")
+  text_file.write(f"num_recycles={num_recycles}\n")
+  text_file.write(f"use_mlm={use_mlm}\n")
+  text_file.write(f"use_dropout={use_dropout}\n")
+  text_file.write(f"num_models={num_models}\n")
+
+# --- Download the predictions ---
+os.system(f"zip -r {jobname}.zip {jobname}")
+files.download(f'{jobname}.zip')
+
+<IPython.core.display.Javascript object>
+<IPython.core.display.Javascript object>
+CELL 13
+from pathlib import Path
+import numpy as np, base64, hashlib
+from IPython.display import display, HTML
+for p in Path(jobname).rglob('*.pdb'):
+    atoms=[l for l in p.read_text().splitlines() if l.startswith('ATOM')]
+    ca=[l for l in atoms if l[12:16].strip()=='CA']
+    xyz=np.array([[float(l[30:38]),float(l[38:46]),float(l[46:54])] for l in atoms])
+    assert len(ca)==100 and np.isfinite(xyz).all()
+    print(p, 'atoms',len(atoms),'residues',len(ca),'sha256',hashlib.sha256(p.read_bytes()).hexdigest())
+    display(HTML('<a download="row29_rosettafold2.pdb" href="data:application/octet-stream;base64,'+base64.b64encode(p.read_bytes()).decode()+'">Download verified RoseTTAFold2 PDB</a>'))
+
+
+assignment5_row29_rf2_X1_ed668/rf2_seed0_00_pred.pdb atoms 1545 residues 100 sha256 4d118c25be8fcc8c8b6552d1fa3a19ae2fb28950cb5ed61a60741580eca53bef
+
+<IPython.core.display.HTML object>
